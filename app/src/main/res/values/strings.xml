@@ -40,4 +40,14 @@
     <string name="offset_summary_zero">No offset (calculated date)</string>
     <string name="offset_summary_plus">+%1$d days</string>
     <string name="offset_summary_minus">−%1$d days</string>
+
+    <string name="lunar_cycle_title">Lunar cycle</string>
+    <string name="moon_cycle_subtitle">For your area: today at local noon, time zone %1$s. Values use a mean lunar month (~29.53 days).</string>
+    <string name="moon_age_days">Moon age: %1$.1f days since new moon</string>
+    <string name="moon_illumination_percent">Illumination: ~%1$d%%</string>
+    <string name="moon_lunation_progress">Lunation progress: %1$d%%</string>
+    <string name="moon_trend_waxing">Trend: waxing (illuminated part growing)</string>
+    <string name="moon_trend_waning">Trend: waning (illuminated part shrinking)</string>
+    <string name="moon_next_full">Next full moon in ~%1$.1f days</string>
+    <string name="moon_next_new">Next new moon in ~%1$.1f days</string>
 </resources>

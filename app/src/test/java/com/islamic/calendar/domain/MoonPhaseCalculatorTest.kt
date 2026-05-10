@@ -1,6 +1,7 @@
 package com.islamic.calendar.domain
 
 import java.time.Instant
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,6 +18,12 @@ class MoonPhaseCalculatorTest {
             val info = MoonPhaseCalculator.forInstant(instant)
             assertTrue(info.phase >= 0.0 && info.phase < 1.0)
             assertTrue(info.illuminatedFraction in 0.0..1.0)
+            assertTrue(info.ageDays >= 0.0 && info.ageDays < MoonPhaseCalculator.SYNODIC_MONTH_DAYS)
+            assertEquals(
+                MoonPhaseCalculator.SYNODIC_MONTH_DAYS,
+                info.ageDays + info.daysUntilNextNewMoon,
+                0.02,
+            )
         }
     }
 }

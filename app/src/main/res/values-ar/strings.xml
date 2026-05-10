@@ -40,4 +40,14 @@
     <string name="offset_summary_zero">بدون إزاحة (التاريخ المحسوب)</string>
     <string name="offset_summary_plus">+%1$d يومًا</string>
     <string name="offset_summary_minus">−%1$d يومًا</string>
+
+    <string name="lunar_cycle_title">الدورة القمرية</string>
+    <string name="moon_cycle_subtitle">لمنطقتك: اليوم عند الظهر المحلي، المنطقة الزمنية %1$s. القيم تعتمد شهرًا قمريًا وسطيًا (~٢٩٫٥٣ يومًا).</string>
+    <string name="moon_age_days">عمر القمر: %1$.1f يومًا منذ المحاق</string>
+    <string name="moon_illumination_percent">الإضاءة: ~%1$d%%</string>
+    <string name="moon_lunation_progress">تقدّم الدورة: %1$d%%</string>
+    <string name="moon_trend_waxing">الاتجاه: اتزايد (جزء الإضاءة يكبر)</string>
+    <string name="moon_trend_waning">الاتجاه: اتناقص (جزء الإضاءة يصغر)</string>
+    <string name="moon_next_full">البدر القادم خلال ~%1$.1f يومًا</string>
+    <string name="moon_next_new">المحاق القادم خلال ~%1$.1f يومًا</string>
 </resources>

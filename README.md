@@ -10,7 +10,7 @@ Repository: [github.com/kaisarnajar/islamic-calendar](https://github.com/kaisarn
 - **Islamic month names** in English transliteration, with Arabic strings when the device locale uses Arabic (`values` / `values-ar`).
 - **Community offset**: adjust the Hijri day (−1 / +1, repeatable) on the **Settings** screen; persisted with **DataStore** across restarts.
 - **Location (optional)**: coarse location → reverse geocode → time zone when available (**API 34+** `Address` time zone via reflection); otherwise the device default time zone is used.
-- **Moon phase**: lightweight synodic model with illuminated fraction and labels (new / waxing / full / waning); drawn with Jetpack Compose **Canvas**.
+- **Moon phase & lunar cycle**: synodic model for your **local date and time zone** (today at local noon): moon **age in days** since new moon, **lunation progress**, **illumination ~%**, waxing/waning, and approximate **days until full / new moon**; visual disk drawn with Compose **Canvas** and a progress bar.
 - **UI**: Material 3, dynamic color on Android 12+, dark fallback palette, safe-area insets, **Navigation Compose** (home + settings).
 
 ## Requirements

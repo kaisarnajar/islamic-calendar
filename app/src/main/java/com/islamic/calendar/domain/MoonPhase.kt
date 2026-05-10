@@ -32,6 +32,12 @@ fun MoonPhaseLabel.stringRes(): Int = when (this) {
 data class MoonPhaseInfo(
     /** Synodic phase in [0, 1): 0 new, 0.5 full */
     val phase: Double,
+    /** Days since the last astronomical new moon for this instant (mean synodic month). */
+    val ageDays: Double,
+    /** Approximate days until the next new moon. */
+    val daysUntilNextNewMoon: Double,
+    /** Approximate days until the next full moon. */
+    val daysUntilNextFullMoon: Double,
     val illuminatedFraction: Double,
     val label: MoonPhaseLabel,
     val waxing: Boolean,
@@ -39,25 +45,39 @@ data class MoonPhaseInfo(
 
 object MoonPhaseCalculator {
 
+    /** Mean synodic month length (days), used for age and cycle UI. */
+    const val SYNODIC_MONTH_DAYS: Double = 29.530588853
+
+    private const val KNOWN_NEW_MOON_JD: Double = 2451549.09766
+
     fun forInstant(instant: Instant): MoonPhaseInfo {
         val jd = julianDayUtc(instant)
-        val phase = synodicPhase(jd)
+        val ageDays = moonAgeDays(jd)
+        val phase = ageDays / SYNODIC_MONTH_DAYS
         val illuminated = ((1 - cos(2 * PI * phase)) / 2).coerceIn(0.0, 1.0)
         val waxing = phase < 0.5
+        val half = SYNODIC_MONTH_DAYS / 2.0
+        val daysUntilFull = if (ageDays < half) {
+            half - ageDays
+        } else {
+            SYNODIC_MONTH_DAYS - ageDays + half
+        }
+        val daysUntilNew = (SYNODIC_MONTH_DAYS - ageDays).coerceAtLeast(0.0)
         return MoonPhaseInfo(
             phase = phase,
+            ageDays = ageDays,
+            daysUntilNextNewMoon = daysUntilNew,
+            daysUntilNextFullMoon = daysUntilFull.coerceAtLeast(0.0),
             illuminatedFraction = illuminated,
             label = labelForPhase(phase),
             waxing = waxing,
         )
     }
 
-    private fun synodicPhase(julianDay: Double): Double {
-        val knownNewMoon = 2451549.09766
-        val synodicMonth = 29.530588853
-        var age = (julianDay - knownNewMoon) % synodicMonth
-        if (age < 0) age += synodicMonth
-        return age / synodicMonth
+    private fun moonAgeDays(julianDay: Double): Double {
+        var age = (julianDay - KNOWN_NEW_MOON_JD) % SYNODIC_MONTH_DAYS
+        if (age < 0) age += SYNODIC_MONTH_DAYS
+        return age
     }
 
     private fun julianDayUtc(instant: Instant): Double {

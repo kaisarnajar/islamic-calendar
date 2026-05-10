@@ -5,17 +5,22 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,9 +41,9 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -58,11 +63,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -83,7 +90,10 @@ import com.islamic.calendar.domain.stringRes
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 private object NavDestinations {
     const val MAIN_TABS = "main_tabs"
@@ -382,46 +392,374 @@ private fun MoonCycleTab(state: HijriUiState) {
         modifier = Modifier
             .fillMaxSize()
             .background(screenGradientBrush())
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        MoonCycleHeroSection(moon = state.moon)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier.padding(vertical = 28.dp, horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                MoonPhaseVisual(
-                    moon = state.moon,
-                    modifier = Modifier.size(220.dp),
-                )
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = stringResource(state.moon.label.stringRes()),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(16.dp))
-                LunarCycleSection(moon = state.moon, zoneId = state.zoneId)
-            }
+            MoonCycleStatsCard(moon = state.moon, zoneId = state.zoneId)
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = if (state.usedGeocoderTimezone) {
+                    stringResource(R.string.location_using_timezone, state.zoneId.id)
+                } else {
+                    stringResource(R.string.location_system_timezone)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+            )
         }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = if (state.usedGeocoderTimezone) {
-                stringResource(R.string.location_using_timezone, state.zoneId.id)
-            } else {
-                stringResource(R.string.location_system_timezone)
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
-            textAlign = TextAlign.Center,
+    }
+}
+
+private fun moonNightSkyBrush(): Brush {
+    return Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF050810),
+            Color(0xFF0F1B2E),
+            Color(0xFF1A3552),
+            Color(0xFF243D5C),
+        ),
+    )
+}
+
+@Composable
+private fun MoonCycleHeroSection(moon: MoonPhaseInfo) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(340.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(moonNightSkyBrush()),
         )
+        MoonStarfield(modifier = Modifier.fillMaxSize())
+        MoonOrbitRings(modifier = Modifier.fillMaxSize())
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 12.dp, bottom = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            MoonPhaseHeroOrb(
+                moon = moon,
+                modifier = Modifier.size(244.dp),
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = stringResource(moon.label.stringRes()),
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFFFFF4DC),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 28.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(R.string.lunar_cycle_title),
+                style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.2.sp),
+                color = Color.White.copy(alpha = 0.55f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonStarfield(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        repeat(56) { i ->
+            val x = (abs(sin(i * 12.9898)) * w).toFloat()
+            val y = (abs(cos(i * 9.542 + 2.17)) * h).toFloat()
+            val r = 0.8f + (i % 4) * 0.55f
+            val a = 0.12f + (i % 7) * 0.055f
+            drawCircle(
+                color = Color.White.copy(alpha = a.coerceIn(0.08f, 0.55f)),
+                radius = r,
+                center = Offset(x, y),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonOrbitRings(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val c = Offset(size.width / 2f, size.height / 2f + size.height * 0.02f)
+        val stroke = Stroke(width = 1.dp.toPx())
+        listOf(0.42f, 0.52f, 0.62f).forEachIndexed { idx, fr ->
+            drawCircle(
+                color = Color.White.copy(alpha = 0.06f + idx * 0.025f),
+                radius = size.minDimension * fr,
+                center = c,
+                style = stroke,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonPhaseHeroOrb(moon: MoonPhaseInfo, modifier: Modifier = Modifier) {
+    val haloGold = Color(0xFFE8C547)
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val c = Offset(size.width / 2f, size.height / 2f)
+            val maxR = size.minDimension / 2f
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        haloGold.copy(alpha = 0.42f),
+                        haloGold.copy(alpha = 0.08f),
+                        Color.Transparent,
+                    ),
+                    center = c,
+                    radius = maxR * 1.18f,
+                ),
+                radius = maxR * 1.12f,
+                center = c,
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = 0.14f),
+                radius = maxR * 0.94f,
+                center = c,
+                style = Stroke(width = 1.5.dp.toPx()),
+            )
+        }
+        MoonPhaseVisual(
+            moon = moon,
+            modifier = Modifier.size(208.dp),
+        )
+    }
+}
+
+@Composable
+private fun MoonCycleStatsCard(moon: MoonPhaseInfo, zoneId: ZoneId) {
+    val progressPct = (moon.phase * 100.0).roundToInt().coerceIn(0, 100)
+    val illumPct = (moon.illuminatedFraction * 100.0).roundToInt().coerceIn(0, 100)
+    val scheme = MaterialTheme.colorScheme
+    val progressBrush = Brush.horizontalGradient(
+        colors = listOf(
+            scheme.primary,
+            scheme.tertiary,
+            scheme.primary.copy(alpha = 0.85f),
+        ),
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = scheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        border = BorderStroke(1.dp, scheme.primary.copy(alpha = 0.18f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.moon_at_a_glance),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = scheme.onSurface,
+                )
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (moon.waxing) {
+                        scheme.primaryContainer.copy(alpha = 0.65f)
+                    } else {
+                        scheme.secondaryContainer.copy(alpha = 0.65f)
+                    },
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (moon.waxing) R.string.moon_trend_waxing else R.string.moon_trend_waning,
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        lineHeight = 16.sp,
+                        color = if (moon.waxing) scheme.onPrimaryContainer else scheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        maxLines = 2,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                MoonMetricTile(
+                    label = stringResource(R.string.moon_stat_label_age),
+                    value = stringResource(R.string.moon_stat_age_value, moon.ageDays),
+                    modifier = Modifier.weight(1f),
+                )
+                MoonMetricTile(
+                    label = stringResource(R.string.moon_stat_label_lit),
+                    value = stringResource(R.string.moon_stat_lit_value, illumPct),
+                    modifier = Modifier.weight(1f),
+                )
+                MoonMetricTile(
+                    label = stringResource(R.string.moon_stat_label_lunation),
+                    value = stringResource(R.string.moon_stat_lunation_value, progressPct),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.45f))
+
+            Text(
+                text = stringResource(R.string.moon_lunation_track),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.onSurfaceVariant,
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(7.dp))
+                    .background(scheme.surfaceVariant.copy(alpha = 0.65f)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(moon.phase.toFloat())
+                        .align(Alignment.CenterStart)
+                        .background(progressBrush),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = stringResource(R.string.moon_new),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.moon_full),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.moon_new),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.moon_milestones_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = scheme.onSurface,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                MoonMilestoneTile(
+                    title = stringResource(R.string.moon_full),
+                    subtitle = stringResource(R.string.moon_next_full, moon.daysUntilNextFullMoon),
+                    modifier = Modifier.weight(1f),
+                    containerColor = scheme.primaryContainer.copy(alpha = 0.35f),
+                    contentColor = scheme.onPrimaryContainer,
+                )
+                MoonMilestoneTile(
+                    title = stringResource(R.string.moon_new),
+                    subtitle = stringResource(R.string.moon_next_new, moon.daysUntilNextNewMoon),
+                    modifier = Modifier.weight(1f),
+                    containerColor = scheme.secondaryContainer.copy(alpha = 0.35f),
+                    contentColor = scheme.onSecondaryContainer,
+                )
+            }
+
+            HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.35f))
+
+            Text(
+                text = stringResource(R.string.moon_cycle_subtitle, zoneId.id),
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant.copy(alpha = 0.88f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonMetricTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier.widthIn(min = 0.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = scheme.surfaceVariant.copy(alpha = 0.55f),
+        tonalElevation = 2.dp,
+        shadowElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = scheme.onSurfaceVariant,
+                maxLines = 2,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = scheme.primary,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonMilestoneTile(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    contentColor: Color,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = containerColor,
+        tonalElevation = 1.dp,
+        shadowElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor.copy(alpha = 0.85f),
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor,
+            )
+        }
     }
 }
 
@@ -473,88 +811,6 @@ private fun IslamicMonthsTab() {
             }
             item { Spacer(Modifier.height(8.dp)) }
         }
-    }
-}
-
-@Composable
-private fun LunarCycleSection(moon: MoonPhaseInfo, zoneId: ZoneId) {
-    val progressPct = (moon.phase * 100.0).roundToInt().coerceIn(0, 100)
-    val illumPct = (moon.illuminatedFraction * 100.0).roundToInt().coerceIn(0, 100)
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.lunar_cycle_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = stringResource(R.string.moon_cycle_subtitle, zoneId.id),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(12.dp))
-        LinearProgressIndicator(
-            progress = { moon.phase.toFloat() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(RoundedCornerShape(5.dp)),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.moon_age_days, moon.ageDays),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = stringResource(R.string.moon_lunation_progress, progressPct),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = stringResource(R.string.moon_illumination_percent, illumPct),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = stringResource(
-                if (moon.waxing) R.string.moon_trend_waxing else R.string.moon_trend_waning,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = stringResource(R.string.moon_next_full, moon.daysUntilNextFullMoon),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = stringResource(R.string.moon_next_new, moon.daysUntilNextNewMoon),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 

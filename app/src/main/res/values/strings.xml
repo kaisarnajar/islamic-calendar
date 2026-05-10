@@ -59,4 +59,14 @@
     <string name="cd_nav_tab_date">Islamic date tab</string>
     <string name="cd_nav_tab_moon">Moon cycle tab</string>
     <string name="cd_nav_tab_months">Islamic months tab</string>
+
+    <string name="moon_at_a_glance">At a glance</string>
+    <string name="moon_milestones_title">Coming up</string>
+    <string name="moon_stat_label_age">Moon age</string>
+    <string name="moon_stat_label_lit">Lit</string>
+    <string name="moon_stat_label_lunation">Lunation</string>
+    <string name="moon_stat_age_value">%1$.1f d</string>
+    <string name="moon_stat_lit_value">~%1$d%%</string>
+    <string name="moon_stat_lunation_value">%1$d%%</string>
+    <string name="moon_lunation_track">Lunation track</string>
 </resources>

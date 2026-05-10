@@ -59,4 +59,14 @@
     <string name="cd_nav_tab_date">تبويب التاريخ الهجري</string>
     <string name="cd_nav_tab_moon">تبويب الدورة القمرية</string>
     <string name="cd_nav_tab_months">تبويب الأشهر الهجرية</string>
+
+    <string name="moon_at_a_glance">نظرة سريعة</string>
+    <string name="moon_milestones_title">القادم</string>
+    <string name="moon_stat_label_age">عمر القمر</string>
+    <string name="moon_stat_label_lit">إضاءة</string>
+    <string name="moon_stat_label_lunation">الدورة</string>
+    <string name="moon_stat_age_value">%1$.1f يومًا</string>
+    <string name="moon_stat_lit_value">~%1$d%%</string>
+    <string name="moon_stat_lunation_value">%1$d%%</string>
+    <string name="moon_lunation_track">مسار الدورة</string>
 </resources>

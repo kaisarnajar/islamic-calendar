@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -434,27 +435,27 @@ private fun MoonCycleHeroSection(moon: MoonPhaseInfo) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(340.dp),
+            .wrapContentHeight(),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .background(moonNightSkyBrush()),
         )
-        MoonStarfield(modifier = Modifier.fillMaxSize())
-        MoonOrbitRings(modifier = Modifier.fillMaxSize())
+        MoonStarfield(modifier = Modifier.matchParentSize())
+        MoonOrbitRings(modifier = Modifier.matchParentSize())
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 12.dp, bottom = 20.dp),
+                .fillMaxWidth()
+                .padding(top = 20.dp, bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             MoonPhaseHeroOrb(
                 moon = moon,
-                modifier = Modifier.size(244.dp),
+                modifier = Modifier.size(232.dp),
             )
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = stringResource(moon.label.stringRes()),
                 style = MaterialTheme.typography.headlineMedium,
@@ -462,11 +463,12 @@ private fun MoonCycleHeroSection(moon: MoonPhaseInfo) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 28.dp),
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.lunar_cycle_title),
                 style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.2.sp),
                 color = Color.White.copy(alpha = 0.55f),
+                modifier = Modifier.padding(bottom = 4.dp),
             )
         }
     }

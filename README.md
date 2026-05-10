@@ -8,10 +8,10 @@ Repository: [github.com/kaisarnajar/islamic-calendar](https://github.com/kaisarn
 
 - **Hijri date** using `java.time` [`HijrahDate`](https://developer.android.com/reference/java/time/chrono/HijrahDate) (Umm al-Qura–style rules as provided by the runtime).
 - **Islamic month names** in English transliteration, with Arabic strings when the device locale uses Arabic (`values` / `values-ar`).
-- **Community offset**: persist a Hijri day adjustment (−1 / +1 and repeated taps) via **DataStore**; survives app restarts.
+- **Community offset**: adjust the Hijri day (−1 / +1, repeatable) on the **Settings** screen; persisted with **DataStore** across restarts.
 - **Location (optional)**: coarse location → reverse geocode → time zone when available (**API 34+** `Address` time zone via reflection); otherwise the device default time zone is used.
 - **Moon phase**: lightweight synodic model with illuminated fraction and labels (new / waxing / full / waning); drawn with Jetpack Compose **Canvas**.
-- **UI**: Material 3, dynamic color on Android 12+, dark fallback palette, safe-area insets.
+- **UI**: Material 3, dynamic color on Android 12+, dark fallback palette, safe-area insets, **Navigation Compose** (home + settings).
 
 ## Requirements
 
@@ -52,7 +52,7 @@ Repository: [github.com/kaisarnajar/islamic-calendar](https://github.com/kaisarn
 
 ## Architecture (overview)
 
-- **UI:** Compose screens in `ui/`, theme under `ui/theme/`.
+- **UI:** Compose screens in `ui/` (`MainScreen.kt`, `SettingsScreen.kt`), theme under `ui/theme/`.
 - **State:** `HijriViewModel` exposes `StateFlow` for Hijri display, moon phase, zone info, and offset.
 - **Data:** `UserOffsetRepository` (DataStore), `LocationRepository` (Play Services Location + `Geocoder`).
 - **Domain:** `HijriCalendar`, `MoonPhaseCalculator`.

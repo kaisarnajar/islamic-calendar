@@ -32,4 +32,12 @@
     <string name="increase_hijri_day">زيادة اليوم الهجري</string>
     <string name="permission_rationale">الموقع التقريبي يحدد المنطقة الزمنية المناسبة ليوم التقويم.</string>
     <string name="grant_location">استخدام الموقع</string>
+
+    <string name="settings">الإعدادات</string>
+    <string name="navigate_back">الرجوع</string>
+    <string name="open_settings">فتح الإعدادات</string>
+    <string name="settings_hijri_adjustment">ضبط التاريخ الهجري</string>
+    <string name="offset_summary_zero">بدون إزاحة (التاريخ المحسوب)</string>
+    <string name="offset_summary_plus">+%1$d يومًا</string>
+    <string name="offset_summary_minus">−%1$d يومًا</string>
 </resources>

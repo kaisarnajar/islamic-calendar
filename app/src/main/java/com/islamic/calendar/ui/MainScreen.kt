@@ -9,30 +9,43 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Brightness2
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,15 +58,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import java.time.ZoneId
-import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -65,12 +80,20 @@ import com.islamic.calendar.R
 import com.islamic.calendar.domain.MoonPhaseInfo
 import com.islamic.calendar.domain.hijriMonthStringRes
 import com.islamic.calendar.domain.stringRes
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.math.roundToInt
 
 private object NavDestinations {
-    const val HOME = "home"
+    const val MAIN_TABS = "main_tabs"
     const val SETTINGS = "settings"
+}
+
+private object TabRoutes {
+    const val DATE = "tab_date"
+    const val MOON = "tab_moon"
+    const val MONTHS = "tab_months"
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -87,189 +110,368 @@ fun IslamicCalendarRoute(viewModel: HijriViewModel) {
         }
     }
 
-    val navController = rememberNavController()
+    val outerNavController = rememberNavController()
 
     NavHost(
-        navController = navController,
-        startDestination = NavDestinations.HOME,
+        navController = outerNavController,
+        startDestination = NavDestinations.MAIN_TABS,
     ) {
-        composable(NavDestinations.HOME) {
-            MainScreen(
+        composable(NavDestinations.MAIN_TABS) {
+            MainTabsScreen(
                 state = state,
                 locationGranted = coarseLocation.status.isGranted,
                 shouldShowRationale = coarseLocation.status.shouldShowRationale,
                 onRequestLocation = { coarseLocation.launchPermissionRequest() },
-                onOpenSettings = { navController.navigate(NavDestinations.SETTINGS) },
+                onOpenSettings = { outerNavController.navigate(NavDestinations.SETTINGS) },
             )
         }
         composable(NavDestinations.SETTINGS) {
             SettingsRoute(
                 viewModel = viewModel,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { outerNavController.popBackStack() },
             )
         }
     }
 }
 
+private fun navigateTab(navController: NavHostController, route: String) {
+    navController.navigate(route) {
+        popUpTo(navController.graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 @Composable
-private fun MainScreen(
+private fun screenGradientBrush(): Brush {
+    return Brush.verticalGradient(
+        listOf(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        ),
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainTabsScreen(
     state: HijriUiState,
     locationGranted: Boolean,
     shouldShowRationale: Boolean,
     onRequestLocation: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val locale = LocalConfiguration.current.locales[0]
-    val gregorianFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale)
+    val tabNavController = rememberNavController()
+    val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: TabRoutes.DATE
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
-    Box(
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                    ),
-                ),
-            ),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(2f),
-                )
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterEnd,
-                ) {
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = when (currentRoute) {
+                            TabRoutes.MOON -> stringResource(R.string.nav_moon_cycle)
+                            TabRoutes.MONTHS -> stringResource(R.string.nav_islamic_months)
+                            else -> stringResource(R.string.nav_islamic_date)
+                        },
+                    )
+                },
+                actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Outlined.Settings,
                             contentDescription = stringResource(R.string.open_settings),
-                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            Icons.Outlined.CalendarMonth,
+                            contentDescription = stringResource(R.string.cd_nav_tab_date),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_islamic_date)) },
+                    selected = currentRoute == TabRoutes.DATE,
+                    onClick = { navigateTab(tabNavController, TabRoutes.DATE) },
+                    colors = NavigationBarItemDefaults.colors(),
+                )
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            Icons.Outlined.Brightness2,
+                            contentDescription = stringResource(R.string.cd_nav_tab_moon),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_moon_cycle)) },
+                    selected = currentRoute == TabRoutes.MOON,
+                    onClick = { navigateTab(tabNavController, TabRoutes.MOON) },
+                    colors = NavigationBarItemDefaults.colors(),
+                )
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.MenuBook,
+                            contentDescription = stringResource(R.string.cd_nav_tab_months),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.nav_islamic_months)) },
+                    selected = currentRoute == TabRoutes.MONTHS,
+                    onClick = { navigateTab(tabNavController, TabRoutes.MONTHS) },
+                    colors = NavigationBarItemDefaults.colors(),
+                )
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = tabNavController,
+            startDestination = TabRoutes.DATE,
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            composable(TabRoutes.DATE) {
+                IslamicDateTab(
+                    state = state,
+                    locationGranted = locationGranted,
+                    shouldShowRationale = shouldShowRationale,
+                    onRequestLocation = onRequestLocation,
+                )
+            }
+            composable(TabRoutes.MOON) {
+                MoonCycleTab(state = state)
+            }
+            composable(TabRoutes.MONTHS) {
+                IslamicMonthsTab()
+            }
+        }
+    }
+}
+
+@Composable
+private fun IslamicDateTab(
+    state: HijriUiState,
+    locationGranted: Boolean,
+    shouldShowRationale: Boolean,
+    onRequestLocation: () -> Unit,
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    val gregorianFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenGradientBrush())
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 32.dp, horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.nav_islamic_date),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(16.dp))
+                AnimatedContent(
+                    targetState = Triple(state.hijri.dayOfMonth, state.hijri.monthValue, state.hijri.year),
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "hijriDate",
+                ) { (day, month, year) ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = day.toString(),
+                            style = MaterialTheme.typography.displayLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = stringResource(hijriMonthStringRes(month)),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = year.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
-            }
-            Spacer(Modifier.height(20.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 28.dp, horizontal = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    MoonPhaseVisual(
-                        moon = state.moon,
-                        modifier = Modifier.size(220.dp),
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        text = stringResource(state.moon.label.stringRes()),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    LunarCycleSection(moon = state.moon, zoneId = state.zoneId)
-                    Spacer(Modifier.height(16.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(
-                            R.string.hero_gregorian,
-                            state.hijri.gregorian.format(gregorianFormatter),
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(24.dp))
-
-                    AnimatedContent(
-                        targetState = Triple(state.hijri.dayOfMonth, state.hijri.monthValue, state.hijri.year),
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "hijriDate",
-                    ) { (day, month, year) ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = day.toString(),
-                                style = MaterialTheme.typography.displayLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(hijriMonthStringRes(month)),
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center,
-                            )
-                            Text(
-                                text = year.toString(),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = if (state.usedGeocoderTimezone) {
-                    stringResource(R.string.location_using_timezone, state.zoneId.id)
-                } else {
-                    stringResource(R.string.location_system_timezone)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
-                textAlign = TextAlign.Center,
-            )
-
-            if (!locationGranted) {
+                Spacer(Modifier.height(20.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Spacer(Modifier.height(16.dp))
-                FilledTonalButton(
-                    onClick = onRequestLocation,
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                ) {
-                    Text(stringResource(R.string.grant_location))
-                }
-                if (shouldShowRationale) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.permission_rationale),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-
-            if (state.isRefreshingLocation) {
-                Spacer(Modifier.height(12.dp))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(28.dp),
-                    strokeWidth = 3.dp,
+                Text(
+                    text = stringResource(
+                        R.string.hero_gregorian,
+                        state.hijri.gregorian.format(gregorianFormatter),
+                    ),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
             }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = if (state.usedGeocoderTimezone) {
+                stringResource(R.string.location_using_timezone, state.zoneId.id)
+            } else {
+                stringResource(R.string.location_system_timezone)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
+            textAlign = TextAlign.Center,
+        )
+
+        if (!locationGranted) {
+            Spacer(Modifier.height(16.dp))
+            FilledTonalButton(
+                onClick = onRequestLocation,
+                modifier = Modifier.fillMaxWidth(0.85f),
+            ) {
+                Text(stringResource(R.string.grant_location))
+            }
+            if (shouldShowRationale) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.permission_rationale),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        if (state.isRefreshingLocation) {
+            Spacer(Modifier.height(12.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(28.dp),
+                strokeWidth = 3.dp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoonCycleTab(state: HijriUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenGradientBrush())
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 28.dp, horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                MoonPhaseVisual(
+                    moon = state.moon,
+                    modifier = Modifier.size(220.dp),
+                )
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = stringResource(state.moon.label.stringRes()),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(16.dp))
+                LunarCycleSection(moon = state.moon, zoneId = state.zoneId)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = if (state.usedGeocoderTimezone) {
+                stringResource(R.string.location_using_timezone, state.zoneId.id)
+            } else {
+                stringResource(R.string.location_system_timezone)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun IslamicMonthsTab() {
+    val months = (1..12).toList()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenGradientBrush()),
+    ) {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item {
+                Text(
+                    text = stringResource(R.string.tab_months_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+            items(months, key = { it }) { monthIndex ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text = stringResource(hijriMonthStringRes(monthIndex)),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = stringResource(R.string.month_order_format, monthIndex),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                    )
+                }
+            }
+            item { Spacer(Modifier.height(8.dp)) }
         }
     }
 }

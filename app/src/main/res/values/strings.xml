@@ -50,4 +50,13 @@
     <string name="moon_trend_waning">Trend: waning (illuminated part shrinking)</string>
     <string name="moon_next_full">Next full moon in ~%1$.1f days</string>
     <string name="moon_next_new">Next new moon in ~%1$.1f days</string>
+
+    <string name="nav_islamic_date">Islamic date</string>
+    <string name="nav_moon_cycle">Moon cycle</string>
+    <string name="nav_islamic_months">Islamic months</string>
+    <string name="tab_months_description">The twelve months of the Hijri calendar. Names follow your device language.</string>
+    <string name="month_order_format">Month %1$d</string>
+    <string name="cd_nav_tab_date">Islamic date tab</string>
+    <string name="cd_nav_tab_moon">Moon cycle tab</string>
+    <string name="cd_nav_tab_months">Islamic months tab</string>
 </resources>

@@ -50,4 +50,13 @@
     <string name="moon_trend_waning">الاتجاه: اتناقص (جزء الإضاءة يصغر)</string>
     <string name="moon_next_full">البدر القادم خلال ~%1$.1f يومًا</string>
     <string name="moon_next_new">المحاق القادم خلال ~%1$.1f يومًا</string>
+
+    <string name="nav_islamic_date">التاريخ الهجري</string>
+    <string name="nav_moon_cycle">الدورة القمرية</string>
+    <string name="nav_islamic_months">الأشهر الهجرية</string>
+    <string name="tab_months_description">الأشهر الاثنا عشر للتقويم الهجري. الأسماء تتبع لغة الجهاز.</string>
+    <string name="month_order_format">الشهر %1$d</string>
+    <string name="cd_nav_tab_date">تبويب التاريخ الهجري</string>
+    <string name="cd_nav_tab_moon">تبويب الدورة القمرية</string>
+    <string name="cd_nav_tab_months">تبويب الأشهر الهجرية</string>
 </resources>

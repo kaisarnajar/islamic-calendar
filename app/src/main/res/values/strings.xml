@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Islamic Calendar</string>
+
+    <string name="hijri_month_1">Muharram</string>
+    <string name="hijri_month_2">Safar</string>
+    <string name="hijri_month_3">Rabiʼ al-awwal</string>
+    <string name="hijri_month_4">Rabiʼ ath-thani</string>
+    <string name="hijri_month_5">Jumada al-ula</string>
+    <string name="hijri_month_6">Jumada ath-thani</string>
+    <string name="hijri_month_7">Rajab</string>
+    <string name="hijri_month_8">Shaʻban</string>
+    <string name="hijri_month_9">Ramadan</string>
+    <string name="hijri_month_10">Shawwal</string>
+    <string name="hijri_month_11">Dhul-Qaʻdah</string>
+    <string name="hijri_month_12">Dhul-Hijjah</string>
+
+    <string name="moon_new">New moon</string>
+    <string name="moon_waxing_crescent">Waxing crescent</string>
+    <string name="moon_first_quarter">First quarter</string>
+    <string name="moon_waxing_gibbous">Waxing gibbous</string>
+    <string name="moon_full">Full moon</string>
+    <string name="moon_waning_gibbous">Waning gibbous</string>
+    <string name="moon_last_quarter">Last quarter</string>
+    <string name="moon_waning_crescent">Waning crescent</string>
+
+    <string name="hero_gregorian">Gregorian: %1$s</string>
+    <string name="offset_hint">Adjust ±1 day if your locality announced a different Hijri date.</string>
+    <string name="location_using_timezone">Calendar uses time zone: %1$s</string>
+    <string name="location_system_timezone">Using device time zone (grant location to refine).</string>
+    <string name="decrease_hijri_day">Decrease Hijri day</string>
+    <string name="increase_hijri_day">Increase Hijri day</string>
+    <string name="permission_rationale">Location helps pick the right calendar day for your region (time zone). Approximate location only.</string>
+    <string name="grant_location">Use location</string>
+</resources>

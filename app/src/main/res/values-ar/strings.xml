@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">التقويم الهجري</string>
+
+    <string name="hijri_month_1">محرم</string>
+    <string name="hijri_month_2">صفر</string>
+    <string name="hijri_month_3">ربيع الأول</string>
+    <string name="hijri_month_4">ربيع الآخر</string>
+    <string name="hijri_month_5">جمادى الأولى</string>
+    <string name="hijri_month_6">جمادى الآخرة</string>
+    <string name="hijri_month_7">رجب</string>
+    <string name="hijri_month_8">شعبان</string>
+    <string name="hijri_month_9">رمضان</string>
+    <string name="hijri_month_10">شوال</string>
+    <string name="hijri_month_11">ذو القعدة</string>
+    <string name="hijri_month_12">ذو الحجة</string>
+
+    <string name="moon_new">محاق</string>
+    <string name="moon_waxing_crescent">هلال متزايد</string>
+    <string name="moon_first_quarter">ربع أول</string>
+    <string name="moon_waxing_gibbous">أحدب متزايد</string>
+    <string name="moon_full">بدر</string>
+    <string name="moon_waning_gibbous">أحدب متناقص</string>
+    <string name="moon_last_quarter">ربع أخير</string>
+    <string name="moon_waning_crescent">هلال متناقص</string>
+
+    <string name="hero_gregorian">ميلادي: %1$s</string>
+    <string name="offset_hint">اضبط ±١ يومًا إن كان إعلان منطقتك للتاريخ الهجري مختلفًا.</string>
+    <string name="location_using_timezone">التقويم يستخدم المنطقة الزمنية: %1$s</string>
+    <string name="location_system_timezone">يُستخدم توقيت الجهاز (اسمح بالموقع لتحسين الدقة).</string>
+    <string name="decrease_hijri_day">إنقاص اليوم الهجري</string>
+    <string name="increase_hijri_day">زيادة اليوم الهجري</string>
+    <string name="permission_rationale">الموقع التقريبي يحدد المنطقة الزمنية المناسبة ليوم التقويم.</string>
+    <string name="grant_location">استخدام الموقع</string>
+</resources>
